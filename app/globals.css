@@ -1,26 +1,419 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
+@layer base {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 222.2 47.4% 11.2%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222.2 84% 4.9%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96%;
+    --accent-foreground: 222.2 84% 4.9%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 222.2 84% 4.9%;
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 212.7 26.8% 83.9%;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: ui-sans-serif, -apple-system, system-ui, "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol";
+  }
+}
+
+/* ChatGPT-like custom styles */
+.chat-container {
+  height: 100vh;
+  display: flex;
+  background: #ffffff;
+}
+
+.sidebar {
+  width: 260px;
+  background: #f7f7f8;
+  border-right: 1px solid #e5e5e5;
+  transition: transform 0.3s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar-mobile {
+  @apply fixed inset-y-0 left-0 z-50 w-64 transform transition-transform duration-300 ease-in-out;
+}
+
+.sidebar-mobile.closed {
+  @apply -translate-x-full;
+}
+
+.chat-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #ffffff;
+}
+
+.message-bubble {
+  @apply max-w-4xl mx-auto px-4 py-4;
+}
+
+.message-user {
+  @apply bg-transparent;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.message-assistant {
+  @apply bg-transparent;
+  display: flex;
+  justify-content: flex-start;
+}
+
+.message-content {
+  @apply prose prose-sm max-w-none;
+  color: #374151;
+  line-height: 1.6;
+}
+
+.message-content p {
+  margin: 0.5rem 0;
+}
+
+.message-content ul {
+  margin: 0.5rem 0;
+  padding-left: 1.5rem;
+}
+
+.message-content li {
+  margin: 0.25rem 0;
+}
+
+.message-content pre {
+  @apply bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto font-mono text-sm;
+  background-color: #1f2937 !important;
+  color: #f9fafb !important;
+}
+
+.message-content code {
+  @apply bg-gray-100 px-1.5 py-0.5 rounded text-sm font-mono;
+}
+
+.message-content pre code {
+  @apply bg-transparent p-0 text-gray-100;
+  background-color: transparent !important;
+  color: #f9fafb !important;
+}
+
+/* Syntax highlighting for code blocks */
+.message-content pre .hljs {
+  background-color: #1f2937 !important;
+  color: #f9fafb !important;
+}
+
+.message-content pre .hljs-keyword {
+  color: #c084fc !important; /* Purple for keywords */
+}
+
+.message-content pre .hljs-string {
+  color: #10b981 !important; /* Green for strings */
+}
+
+.message-content pre .hljs-comment {
+  color: #6b7280 !important; /* Gray for comments */
+}
+
+.message-content pre .hljs-type {
+  color: #3b82f6 !important; /* Blue for types */
+}
+
+.message-content pre .hljs-function {
+  color: #f59e0b !important; /* Orange for functions */
+}
+
+.message-content pre .hljs-variable {
+  color: #f9fafb !important; /* White for variables */
+}
+
+/* Additional syntax highlighting classes */
+.message-content pre .hljs-built_in {
+  color: #f59e0b !important; /* Orange for built-in functions */
+}
+
+.message-content pre .hljs-number {
+  color: #10b981 !important; /* Green for numbers */
+}
+
+.message-content pre .hljs-literal {
+  color: #ef4444 !important; /* Red for literals */
+}
+
+.message-content pre .hljs-title {
+  color: #3b82f6 !important; /* Blue for titles/classes */
+}
+
+.message-content pre .hljs-attr {
+  color: #8b5cf6 !important; /* Purple for attributes */
+}
+
+.message-content pre .hljs-params {
+  color: #f9fafb !important; /* White for parameters */
+}
+
+/* Ensure all text in code blocks is visible */
+.message-content pre * {
+  color: inherit !important;
+}
+
+.message-content pre code * {
+  color: inherit !important;
+}
+
+/* Force visibility for code content */
+.message-content pre {
+  line-height: 1.5 !important;
+}
+
+.message-content pre code {
+  background: transparent !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  color: #f9fafb !important;
+  font-size: 0.875rem !important;
+  line-height: 1.5 !important;
+}
+
+/* Override any conflicting styles */
+.message-content pre[class*="language-"] {
+  background-color: #1f2937 !important;
+  color: #f9fafb !important;
+}
+
+.message-content pre[class*="language-"] code {
+  background-color: transparent !important;
+  color: #f9fafb !important;
+}
+
+.input-area {
+  @apply border-t border-gray-200 bg-white;
+}
+
+.input-container {
+  @apply max-w-4xl mx-auto p-4;
+}
+
+.input-wrapper {
+  @apply relative flex items-end space-x-2;
+}
+
+
+
+/* ChatGPT specific styles */
+.chatgpt-sidebar {
+  background: #f7f7f8;
+  border-right: 1px solid #e5e5e5;
+}
+
+.chatgpt-main {
+  background: #ffffff;
+}
+
+.chatgpt-welcome {
+  color: #374151;
+  font-size: 2rem;
+  font-weight: 600;
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.chatgpt-input {
+  background: #ffffff;
+  border: 1px solid #d1d5db;
+  border-radius: 12px;
+  padding: 12px 16px;
+  font-size: 16px;
+  color: #374151;
+  resize: none;
+  min-height: 52px;
+  max-height: 200px;
+}
+
+.chatgpt-input:focus {
+  outline: none;
+  border-color: #10a37f;
+  box-shadow: 0 0 0 3px rgba(16, 163, 127, 0.1);
+}
+
+.chatgpt-button {
+  background: #10a37f;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.chatgpt-button:hover {
+  background: #0d8f6b;
+}
+
+.chatgpt-button:disabled {
+  background: #d1d5db;
+  cursor: not-allowed;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .sidebar {
+    @apply fixed inset-y-0 left-0 z-50 w-64 transform transition-transform duration-300 ease-in-out;
+  }
+  
+  .sidebar.closed {
+    @apply -translate-x-full;
+  }
+  
+  .chat-area {
+    @apply w-full;
+  }
+}
+
+/* Animation classes */
+.fade-in {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.slide-up {
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { 
+    transform: translateY(10px); 
+    opacity: 0; 
+  }
+  to { 
+    transform: translateY(0); 
+    opacity: 1; 
+  }
+}
+
+/* Typing animation */
+@keyframes typing {
+  0%, 60%, 100% {
+    transform: translateY(0);
+  }
+  30% {
+    transform: translateY(-10px);
+  }
+}
+
+.typing-dot {
+  animation: typing 1.4s infinite ease-in-out;
+}
+
+.typing-dot:nth-child(1) {
+  animation-delay: -0.32s;
+}
+
+.typing-dot:nth-child(2) {
+  animation-delay: -0.16s;
+}
+
+.typing-dot:nth-child(3) {
+  animation-delay: 0s;
+}
+
+/* Message animations */
+.message-enter {
+  animation: messageSlideIn 0.3s ease-out;
+}
+
+@keyframes messageSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Generation status animation */
+.generation-pulse {
+  animation: generationPulse 2s infinite;
+}
+
+@keyframes generationPulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* Stop button hover effect */
+.stop-button {
+  transition: all 0.2s ease;
+}
+
+.stop-button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+/* Send button hover effect */
+.send-button {
+  transition: all 0.2s ease;
+}
+
+.send-button:hover {
+  /* transform: scale(1.05); */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
