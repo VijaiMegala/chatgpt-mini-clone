@@ -76,6 +76,8 @@ export default function Home() {
 
   const currentConversation = conversations.find(c => c.id === currentConversationId);
   const currentMessages = currentConversation?.messages || [];
+  
+  
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -715,8 +717,7 @@ export default function Home() {
           setConversations(prev => [newConversation, ...prev]);
           conversationId = newConversation.id;
           setCurrentConversationId(conversationId);
-          // Don't navigate - stay on home page for new chats
-          return;
+          // Don't navigate immediately - wait for AI response to complete
         } else {
           console.error('Failed to create conversation in database');
           return;
@@ -944,6 +945,11 @@ export default function Home() {
       // Refresh available paths after sending message
       if (conversationId) {
         await fetchAvailablePaths(conversationId);
+      }
+      
+      // Navigate to conversation page after AI response is complete
+      if (conversationId) {
+        router.push(`/chat/${conversationId}`);
       }
     }
   };
