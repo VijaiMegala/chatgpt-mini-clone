@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useUser, SignInButton, UserButton } from "@clerk/nextjs";
+import { useRouter } from "next/navigation";
 import { ChatMessage } from "@/components/chat-message";
 import { ChatInput } from "@/components/chat-input";
 import { Sidebar } from "@/components/sidebar";
@@ -61,6 +62,7 @@ interface Conversation {
 
 export default function Home() {
   const { isSignedIn, user, isLoaded } = useUser();
+  const router = useRouter();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -256,6 +258,13 @@ export default function Home() {
     }
   }, [isLoaded, isSignedIn]);
 
+  // Load messages for current conversation when it changes
+  useEffect(() => {
+    if (currentConversationId && isSignedIn) {
+      fetchConversationMessages(currentConversationId);
+    }
+  }, [currentConversationId, isSignedIn]);
+
   // Call useEffect at the top level - it will only run when currentMessages changes
   useEffect(() => {
     // Only scroll if user is authenticated and there are messages
@@ -298,11 +307,19 @@ export default function Home() {
   const handleNewChat = () => {
     setCurrentConversationId(null);
     setSidebarOpen(false);
+    // Clear any current messages when starting a new chat
+    setConversations(prev => 
+      prev.map(conv => 
+        conv.id === currentConversationId
+          ? { ...conv, messages: [] }
+          : conv
+      )
+    );
   };
 
   const handleSelectConversation = async (id: string) => {
-    // Navigate to the conversation page
-    window.location.href = `/chat/${id}`;
+    // Navigate to the conversation page for existing chats
+    router.push(`/chat/${id}`);
   };
 
   const handleDeleteConversation = async (id: string) => {
@@ -698,8 +715,7 @@ export default function Home() {
           setConversations(prev => [newConversation, ...prev]);
           conversationId = newConversation.id;
           setCurrentConversationId(conversationId);
-          // Navigate to the new conversation
-          window.location.href = `/chat/${conversationId}`;
+          // Don't navigate - stay on home page for new chats
           return;
         } else {
           console.error('Failed to create conversation in database');

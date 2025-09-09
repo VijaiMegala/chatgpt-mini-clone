@@ -175,7 +175,7 @@ export function Sidebar({
                       ? "bg-gray-200"
                       : "hover:bg-gray-100"
                   )}
-                  onClick={() => router.push(`/chat/${conversation.id}`)}
+                  onClick={() => onSelectConversation(conversation.id)}
                 >
                   <MessageSquare className="h-4 w-4 flex-shrink-0 text-gray-500" />
                   
