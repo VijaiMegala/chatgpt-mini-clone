@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useUser } from "@clerk/nextjs";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { 
@@ -55,6 +56,7 @@ export function Sidebar({
   isLoading = false,
 }: SidebarProps) {
   const { user } = useUser();
+  const router = useRouter();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState("");
 
@@ -173,7 +175,7 @@ export function Sidebar({
                       ? "bg-gray-200"
                       : "hover:bg-gray-100"
                   )}
-                  onClick={() => onSelectConversation(conversation.id)}
+                  onClick={() => router.push(`/chat/${conversation.id}`)}
                 >
                   <MessageSquare className="h-4 w-4 flex-shrink-0 text-gray-500" />
                   

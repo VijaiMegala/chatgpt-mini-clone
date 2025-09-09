@@ -13,6 +13,7 @@ export interface IUser extends Document {
 export interface IConversation extends Document {
   userId: string;
   title: string;
+  activePath: string[]; // Array of message IDs representing the current active conversation path
   createdAt: Date;
   updatedAt: Date;
 }
@@ -24,7 +25,9 @@ export interface IMessage extends Document {
   content: string;
   timestamp: Date;
   edited?: boolean;
-  parentMessageId?: string;
+  parentId?: string; // Reference to parent message (for tree structure)
+  branchIndex?: number; // Index within the branch (0 for first message in branch)
+  isActive?: boolean; // Whether this message is part of the active path
   metadata?: Record<string, any>;
   files?: Array<{
     id: string;
@@ -37,8 +40,15 @@ export interface IMessage extends Document {
     preview?: string;
     analysis?: {
       text?: string;
+      extractedText?: string;
       extractedData?: any;
       summary?: string;
+      metadata?: {
+        pageCount?: number;
+        wordCount?: number;
+        language?: string;
+        confidence?: number;
+      };
     };
     uploadedAt: Date;
   }>;
@@ -63,8 +73,15 @@ export interface IMessage extends Document {
         preview?: string;
         analysis?: {
           text?: string;
+          extractedText?: string;
           extractedData?: any;
           summary?: string;
+          metadata?: {
+            pageCount?: number;
+            wordCount?: number;
+            language?: string;
+            confidence?: number;
+          };
         };
         uploadedAt: Date;
       }>;
@@ -100,7 +117,9 @@ const MessageSchema = new Schema<IMessage>({
   content: { type: String, required: true },
   timestamp: { type: Date, default: Date.now, index: true },
   edited: { type: Boolean, default: false },
-  parentMessageId: { type: String },
+  parentId: { type: String, index: true }, // For tree structure
+  branchIndex: { type: Number, default: 0 }, // Position in the conversation flow
+  isActive: { type: Boolean, default: true }, // Whether this message is in the active path
   metadata: { type: Schema.Types.Mixed, default: {} },
   files: [{
     id: { type: String, required: true },
@@ -113,8 +132,15 @@ const MessageSchema = new Schema<IMessage>({
     preview: { type: String },
     analysis: {
       text: { type: String },
+      extractedText: { type: String },
       extractedData: { type: Schema.Types.Mixed },
       summary: { type: String },
+      metadata: {
+        pageCount: { type: Number },
+        wordCount: { type: Number },
+        language: { type: String },
+        confidence: { type: Number },
+      },
     },
     uploadedAt: { type: Date, default: Date.now },
   }],
@@ -154,6 +180,7 @@ const MessageSchema = new Schema<IMessage>({
 const ConversationSchema = new Schema<IConversation>({
   userId: { type: String, required: true, index: true },
   title: { type: String, required: true },
+  activePath: [{ type: String }], // Array of message IDs representing the current active path
 }, {
   timestamps: true,
 });

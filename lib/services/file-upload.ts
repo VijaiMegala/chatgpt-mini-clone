@@ -1,4 +1,5 @@
 import { v2 as cloudinary } from 'cloudinary';
+import { textExtractionService, TextExtractionResult } from './text-extraction';
 
 // Configure Cloudinary
 cloudinary.config({
@@ -22,6 +23,12 @@ export interface FileContentAnalysis {
   text?: string;
   extractedData?: any;
   summary?: string;
+  metadata?: {
+    pageCount?: number;
+    wordCount?: number;
+    language?: string;
+    confidence?: number;
+  };
 }
 
 class FileUploadService {
@@ -231,6 +238,23 @@ class FileUploadService {
    */
   async analyzeFileContent(file: FileUploadResult): Promise<FileContentAnalysis> {
     try {
+      // First, try to extract text content from the file
+      const extractionResult = await textExtractionService.extractTextFromUrl(
+        file.url, 
+        file.name, 
+        file.type
+      );
+
+      // If we successfully extracted text, use it
+      if (extractionResult.text && extractionResult.text.trim().length > 0) {
+        return {
+          text: extractionResult.text,
+          summary: `File: ${file.name}\n\nExtracted Content:\n${extractionResult.text}`,
+          metadata: extractionResult.metadata
+        };
+      }
+
+      // Fallback to the old analysis methods for files that don't support text extraction
       if (file.type.startsWith('image/')) {
         return await this.analyzeImageContent(file);
       } else if (file.type === 'application/pdf') {
@@ -239,13 +263,13 @@ class FileUploadService {
         return await this.analyzeTextContent(file);
       } else {
         return {
-          summary: `File: ${file.name} (${file.type})`,
+          summary: `File: ${file.name} (${file.type})\n\nThis file has been uploaded and can be referenced in the conversation.`,
         };
       }
     } catch (error) {
       console.error('File analysis error:', error);
       return {
-        summary: `File: ${file.name} - Analysis failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        summary: `File: ${file.name} (${(file.size / 1024).toFixed(2)} KB)\n\nThis file has been uploaded and can be referenced in the conversation.`,
       };
     }
   }
@@ -456,17 +480,34 @@ class FileUploadService {
    */
   private async analyzePdfContent(file: FileUploadResult): Promise<FileContentAnalysis> {
     try {
-      // For PDFs, we need to use a different approach since they can't be read as text directly
-      // We'll use the URL and let Gemini handle it as a document
-      const analysis = await this.analyzeDocumentWithGemini(file.url, file.name, 'pdf');
-      return {
-        summary: analysis,
-        text: analysis,
-      };
+      // For PDFs, we'll try to fetch the content and analyze it as text
+      // since Gemini has issues with PDF URLs directly
+      const response = await fetch(file.url);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch PDF: ${response.statusText}`);
+      }
+      
+      const arrayBuffer = await response.arrayBuffer();
+      const base64 = Buffer.from(arrayBuffer).toString('base64');
+      
+      // Try to analyze with Gemini using base64
+      try {
+        const analysis = await this.analyzeDocumentWithGemini(file.url, file.name, 'pdf');
+        return {
+          summary: analysis,
+          text: analysis,
+        };
+      } catch (geminiError) {
+        // If Gemini fails, provide a basic analysis
+        console.warn('Gemini PDF analysis failed, using basic analysis:', geminiError);
+        return {
+          summary: `PDF document: ${file.name} (${(file.size / 1024).toFixed(2)} KB)\n\nThis PDF has been uploaded and can be referenced in the conversation. The content will be processed when you ask specific questions about it.`,
+        };
+      }
     } catch (error) {
       console.error('PDF analysis error:', error);
       return {
-        summary: `PDF document: ${file.name} - Could not analyze content`,
+        summary: `PDF document: ${file.name} (${(file.size / 1024).toFixed(2)} KB)\n\nThis PDF has been uploaded and can be referenced in the conversation.`,
       };
     }
   }

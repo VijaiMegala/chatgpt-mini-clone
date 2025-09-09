@@ -75,6 +75,12 @@ interface ChatMessageProps {
   onDislike?: (messageId: string) => void;
   onMessageUpdate?: (messageId: string, newContent: string) => void;
   onRegenerateAfterEdit?: (messageId: string) => void;
+  // Pagination props
+  showPagination?: boolean;
+  currentPage?: number;
+  totalPages?: number;
+  onPreviousPage?: () => void;
+  onNextPage?: () => void;
 }
 
 export function ChatMessage({
@@ -88,6 +94,11 @@ export function ChatMessage({
   onDislike,
   onMessageUpdate,
   onRegenerateAfterEdit,
+  showPagination = false,
+  currentPage = 1,
+  totalPages = 1,
+  onPreviousPage,
+  onNextPage,
 }: ChatMessageProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(message.content);
@@ -142,13 +153,30 @@ export function ChatMessage({
   const isUser = message.role === "user";
   const isAssistant = message.role === "assistant";
 
-  const getFileIcon = (type: string) => {
+  const getFileIcon = (type: string, isWhite = false) => {
+    const iconClass = isWhite ? "h-4 w-4 text-white" : "h-4 w-4";
     if (type.startsWith("image/")) {
-      return <Image className="h-4 w-4" />;
+      return <Image className={iconClass} />;
     } else if (type === "application/pdf") {
-      return <FileText className="h-4 w-4" />;
+      return <FileText className={iconClass} />;
     } else {
-      return <File className="h-4 w-4" />;
+      return <File className={iconClass} />;
+    }
+  };
+
+  const getFileIconColor = (type: string) => {
+    if (type.startsWith("image/")) {
+      return "bg-blue-500";
+    } else if (type === "application/pdf") {
+      return "bg-red-500";
+    } else if (type.includes("csv") || type.includes("spreadsheet")) {
+      return "bg-green-500";
+    } else if (type.includes("text/")) {
+      return "bg-yellow-500";
+    } else if (type.includes("json")) {
+      return "bg-purple-500";
+    } else {
+      return "bg-gray-500";
     }
   };
 
@@ -244,44 +272,90 @@ export function ChatMessage({
                 : "bg-white text-gray-900"
             )}>
               {/* File Attachments */}
-              {message.files && message.files.length > 0 && (
-                <div className="mb-3 space-y-2">
-                  {message.files.map((file) => (
-                    <div
-                      key={file.id}
-                      className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg border hover:bg-gray-100 transition-colors"
-                    >
-                      {getFileIcon(file.type)}
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate text-gray-800">
-                          {file.name}
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          {formatFileSize(file.size)}
-                        </p>
+              {message.files && Array.isArray(message.files) && message.files.length > 0 && (
+                <div className="mb-3">
+                  <div className="flex flex-wrap gap-2">
+                    {message.files.map((file) => (
+                      <div
+                        key={file.id}
+                        className="relative rounded-lg border transition-colors max-w-[200px] overflow-hidden bg-gray-50 border-gray-200 hover:bg-gray-100"
+                      >
+                        {/* Image Preview for image files */}
+                        {file.type.startsWith('image/') && (file.preview || file.cloudinaryUrl || file.url) ? (
+                          <div className="relative">
+                            <img
+                              src={file.preview || file.cloudinaryUrl || file.url}
+                              alt={file.name}
+                              className="w-full h-32 object-cover"
+                            />
+                            {/* Overlay with action buttons */}
+                            <div className="absolute top-2 right-2 flex gap-1">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handlePreview(file)}
+                                className="w-6 h-6 bg-black/50 hover:bg-black/70 rounded-full flex items-center justify-center transition-colors p-0"
+                                title="Preview image"
+                              >
+                                <Eye className="h-3 w-3 text-white" />
+                              </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleDownload(file)}
+                                  className="w-6 h-6 bg-black/50 hover:bg-black/70 rounded-full flex items-center justify-center transition-colors p-0"
+                                  title="Download image"
+                                >
+                                  <Download className="h-3 w-3 text-white" />
+                                </Button>
+                            </div>
+                          </div>
+                        ) : (
+                          /* Non-image file display */
+                          <div className="p-2">
+                            <div className="flex items-start gap-2">
+                              {/* File Icon */}
+                              <div className={cn("flex-shrink-0 w-6 h-6 rounded flex items-center justify-center", getFileIconColor(file.type))}>
+                                {getFileIcon(file.type, true)}
+                              </div>
+                              
+                              {/* File Info */}
+                              <div className="flex-1 min-w-0">
+                                <p className="text-xs font-medium text-gray-900 truncate">
+                                  {file.name}
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                  {formatFileSize(file.size)}
+                                </p>
+                              </div>
+                              
+                              {/* Action Buttons */}
+                              <div className="flex items-center gap-1">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handlePreview(file)}
+                                  className="h-4 w-4 p-0 hover:bg-gray-200"
+                                  title="Preview file"
+                                >
+                                  <Eye className="h-2 w-2" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleDownload(file)}
+                                  className="h-4 w-4 p-0 hover:bg-gray-200"
+                                  title="Download file"
+                                >
+                                  <Download className="h-2 w-2" />
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        )}
                       </div>
-                      <div className="flex items-center gap-1">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handlePreview(file)}
-                          className="h-6 w-6 p-0 hover:bg-gray-200"
-                          title="Preview file"
-                        >
-                          <Eye className="h-3 w-3" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDownload(file)}
-                          className="h-6 w-6 p-0 hover:bg-gray-200"
-                          title="Download file"
-                        >
-                          <Download className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
               )}
               
@@ -436,6 +510,44 @@ export function ChatMessage({
                           </p>
                         );
                       },
+                      // Table components for proper rendering
+                      table: ({ children, ...props }) => (
+                        <div className="table-wrapper">
+                          <table {...props}>
+                            {children}
+                          </table>
+                        </div>
+                      ),
+                      thead: ({ children, ...props }) => (
+                        <thead {...props}>
+                          {children}
+                        </thead>
+                      ),
+                      tbody: ({ children, ...props }) => (
+                        <tbody {...props}>
+                          {children}
+                        </tbody>
+                      ),
+                      tr: ({ children, ...props }) => (
+                        <tr {...props}>
+                          {children}
+                        </tr>
+                      ),
+                      th: ({ children, ...props }) => (
+                        <th {...props}>
+                          {children}
+                        </th>
+                      ),
+                      td: ({ children, ...props }) => (
+                        <td {...props}>
+                          {children}
+                        </td>
+                      ),
+                      caption: ({ children, ...props }) => (
+                        <caption {...props}>
+                          {children}
+                        </caption>
+                      ),
                     }}
                   >
                     {message.content}
@@ -497,6 +609,35 @@ export function ChatMessage({
                     >
                       <Edit3 className="h-4 w-4" />
                     </Button>
+                  )}
+                  
+                  {/* Pagination controls - Only for assistant messages with multiple paths */}
+                  {isAssistant && showPagination && (
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={onPreviousPage}
+                        disabled={currentPage <= 1}
+                        className="h-8 w-8 p-0 hover:bg-gray-100"
+                        title="Previous page"
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                      </Button>
+                      <span className="text-sm text-gray-600 min-w-[40px] text-center">
+                        {currentPage}/{totalPages}
+                      </span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={onNextPage}
+                        disabled={currentPage >= totalPages}
+                        className="h-8 w-8 p-0 hover:bg-gray-100"
+                        title="Next page"
+                      >
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    </div>
                   )}
                   
                   {/* Copy button - For all messages */}

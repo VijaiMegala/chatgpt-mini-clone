@@ -32,11 +32,21 @@ export async function GET(
       );
     }
 
-    // Get messages for this conversation
-    const messages = await Message.find({
-      conversationId: id,
-      userId,
-    }).sort({ timestamp: 1 });
+    // Get messages for this conversation (only active path)
+    let messages;
+    if (conversation.activePath && conversation.activePath.length > 0) {
+      messages = await Message.find({
+        conversationId: id,
+        userId,
+        _id: { $in: conversation.activePath }
+      }).sort({ branchIndex: 1 });
+    } else {
+      // Fallback: get all messages for this conversation
+      messages = await Message.find({
+        conversationId: id,
+        userId,
+      }).sort({ timestamp: 1 });
+    }
 
     return NextResponse.json({
       ...conversation.toObject(),

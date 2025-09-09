@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAuth } from "@clerk/nextjs/server";
 import { fileUploadService } from "@/lib/services/file-upload";
+import { textExtractionService } from "@/lib/services/text-extraction";
 
 export async function POST(req: NextRequest) {
   try {
@@ -41,16 +42,31 @@ export async function POST(req: NextRequest) {
     // Upload file
     const uploadResult = await fileUploadService.uploadFile(file);
 
-    // Analyze file content
+    // Extract text content from the file
+    let extractedText = '';
+    try {
+      const extractionResult = await textExtractionService.extractText(file, file.type);
+      extractedText = extractionResult.text;
+    } catch (error) {
+      console.warn('Text extraction failed during upload:', error);
+    }
+
+    // Analyze file content (this will use the extracted text if available)
     const analysis = await fileUploadService.analyzeFileContent(uploadResult);
 
     return NextResponse.json({
       success: true,
       file: {
         ...uploadResult,
-        analysis, // Include analysis directly in the file object
+        analysis: {
+          ...analysis,
+          extractedText: extractedText, // Include the raw extracted text
+        },
       },
-      analysis, // Keep analysis at root level for backward compatibility
+      analysis: {
+        ...analysis,
+        extractedText: extractedText,
+      },
     });
 
   } catch (error) {

@@ -108,7 +108,7 @@
 }
 
 .message-content {
-  @apply prose prose-sm max-w-none;
+  @apply prose prose-sm max-w-none px-2;
   color: #374151;
   line-height: 1.6;
 }
@@ -252,6 +252,7 @@
 }
 
 .chatgpt-main {
+  width: 100vw;
   background: #ffffff;
 }
 
@@ -416,4 +417,345 @@
 .send-button:hover {
   /* transform: scale(1.05); */
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Table styles for markdown tables */
+.message-content table {
+  @apply border-collapse border border-gray-300 my-4 text-sm;
+  background: #ffffff;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  min-width: 800px; /* Increased minimum width for better readability */
+  table-layout: auto; /* Auto layout for better content fitting */
+}
+
+/* Ensure tables are responsive */
+@media (max-width: 1200px) {
+  .message-content table {
+    @apply text-sm;
+    min-width: 700px;
+  }
+  
+  .message-content th,
+  .message-content td {
+    @apply px-2 py-2;
+  }
+}
+
+@media (max-width: 1024px) {
+  .message-content table {
+    @apply text-sm;
+    min-width: 600px;
+  }
+  
+  .message-content th,
+  .message-content td {
+    @apply px-2 py-2;
+  }
+}
+
+@media (max-width: 768px) {
+  .message-content table {
+    @apply text-xs;
+    min-width: 500px;
+  }
+  
+  .message-content th,
+  .message-content td {
+    @apply px-2 py-1;
+  }
+  
+  .message-content .table-wrapper {
+    @apply mx-1 px-1;
+  }
+}
+
+@media (max-width: 480px) {
+  .message-content table {
+    @apply text-xs;
+    min-width: 400px;
+    font-size: 0.75rem;
+  }
+  
+  .message-content th,
+  .message-content td {
+    @apply px-1 py-1;
+    font-size: 0.75rem;
+  }
+  
+  .message-content .table-wrapper {
+    @apply mx-0 px-1;
+  }
+}
+
+.message-content thead {
+  @apply bg-gray-50;
+}
+
+.message-content thead tr {
+  @apply border-b border-gray-300;
+}
+
+.message-content th {
+  @apply px-3 py-2 text-left font-semibold text-gray-700 border-r border-gray-300;
+  background: #f9fafb;
+}
+
+.message-content th:last-child {
+  @apply border-r-0;
+}
+
+.message-content tbody tr {
+  @apply border-b border-gray-200 hover:bg-gray-50 transition-colors;
+}
+
+.message-content tbody tr:last-child {
+  @apply border-b-0;
+}
+
+.message-content tbody tr:nth-child(even) {
+  background-color: #fafafa;
+}
+
+.message-content td {
+  @apply px-3 py-2 text-gray-800 border-r border-gray-200;
+  vertical-align: top;
+}
+
+.message-content td:last-child {
+  @apply border-r-0;
+}
+
+/* Responsive table wrapper */
+.message-content .table-wrapper {
+  @apply overflow-x-auto my-4 mx-2 px-2;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  background: #ffffff;
+  width: 100%;
+  max-width: 100%;
+  position: relative;
+  border: 1px solid #e5e7eb;
+}
+
+/* Ensure proper scrolling behavior */
+.message-content .table-wrapper {
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Table caption styling */
+.message-content caption {
+  @apply text-sm text-gray-600 font-medium mb-2 text-left;
+}
+
+/* Table cell content alignment */
+.message-content td[align="center"] {
+  @apply text-center;
+}
+
+.message-content td[align="right"] {
+  @apply text-right;
+}
+
+.message-content th[align="center"] {
+  @apply text-center;
+}
+
+.message-content th[align="right"] {
+  @apply text-right;
+}
+
+/* Table number formatting */
+.message-content td:has(.number) {
+  @apply text-right font-mono;
+}
+
+/* Better number formatting for all data cells */
+.message-content td {
+  font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', 'Source Code Pro', monospace;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.025em;
+}
+
+/* Specific formatting for different data types */
+.message-content td:not(:first-child) {
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+/* Table header styling improvements */
+.message-content th {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: center;
+  font-weight: 600;
+}
+
+/* Ensure table cells handle long content properly */
+.message-content td {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Column width management for better responsiveness */
+.message-content table th:nth-child(1),
+.message-content table td:nth-child(1) {
+  width: 25%; /* Rule names - wider for better readability */
+  min-width: 150px;
+  text-align: left;
+}
+
+.message-content table th:nth-child(2),
+.message-content table td:nth-child(2) {
+  width: 8%; /* Total True */
+  min-width: 70px;
+}
+
+.message-content table th:nth-child(3),
+.message-content table td:nth-child(3) {
+  width: 8%; /* Predicted */
+  min-width: 70px;
+}
+
+.message-content table th:nth-child(4),
+.message-content table td:nth-child(4) {
+  width: 6%; /* TP */
+  min-width: 50px;
+}
+
+.message-content table th:nth-child(5),
+.message-content table td:nth-child(5) {
+  width: 6%; /* FP */
+  min-width: 50px;
+}
+
+.message-content table th:nth-child(6),
+.message-content table td:nth-child(6) {
+  width: 6%; /* FN */
+  min-width: 50px;
+}
+
+.message-content table th:nth-child(7),
+.message-content table td:nth-child(7) {
+  width: 6%; /* TN */
+  min-width: 50px;
+}
+
+.message-content table th:nth-child(8),
+.message-content table td:nth-child(8) {
+  width: 8%; /* Precision */
+  min-width: 70px;
+}
+
+.message-content table th:nth-child(9),
+.message-content table td:nth-child(9) {
+  width: 8%; /* Recall */
+  min-width: 70px;
+}
+
+.message-content table th:nth-child(10),
+.message-content table td:nth-child(10) {
+  width: 8%; /* F1 Score */
+  min-width: 70px;
+}
+
+.message-content table th:nth-child(11),
+.message-content table td:nth-child(11) {
+  width: 8%; /* Coverage */
+  min-width: 70px;
+}
+
+.message-content table th:nth-child(12),
+.message-content table td:nth-child(12) {
+  width: 8%; /* Accuracy */
+  min-width: 70px;
+}
+
+/* Table scrollbar styling */
+.message-content .table-wrapper::-webkit-scrollbar {
+  height: 8px;
+}
+
+.message-content .table-wrapper::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.message-content .table-wrapper::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+.message-content .table-wrapper::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* Ensure proper overflow handling */
+.message-content .table-wrapper {
+  -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+  scrollbar-width: thin; /* Firefox */
+}
+
+/* Add visual indicator for scrollable tables */
+.message-content .table-wrapper::after {
+  content: "← Scroll horizontally to see more columns →";
+  display: block;
+  text-align: center;
+  font-size: 0.75rem;
+  color: #6b7280;
+  padding: 0.5rem;
+  background: #f9fafb;
+  border-top: 1px solid #e5e7eb;
+  margin-top: 0.5rem;
+  border-radius: 0 0 8px 8px;
+}
+
+@media (min-width: 1200px) {
+  .message-content .table-wrapper::after {
+    display: none;
+  }
+}
+
+/* Improve table visual hierarchy */
+.message-content table {
+  border-spacing: 0;
+}
+
+.message-content th {
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.message-content tbody tr:hover {
+  background-color: #f8fafc;
+  transition: background-color 0.2s ease;
+}
+
+/* Ensure table doesn't break layout on small screens */
+@media (max-width: 320px) {
+  .message-content .table-wrapper {
+    margin-left: -0.5rem;
+    margin-right: -0.5rem;
+  }
+  
+  .message-content table {
+    font-size: 0.65rem;
+    min-width: 300px;
+  }
+  
+  .message-content th,
+  .message-content td {
+    padding: 0.125rem 0.25rem;
+    font-size: 0.65rem;
+  }
 }

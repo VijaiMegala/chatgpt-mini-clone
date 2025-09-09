@@ -76,12 +76,20 @@ export function ChatInput({
   const handleFileUpload = async (file: File) => {
     // Create a temporary file object with uploading state
     const tempFileId = `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    
+    // Create preview URL for images
+    let previewUrl = '';
+    if (file.type.startsWith('image/')) {
+      previewUrl = URL.createObjectURL(file);
+    }
+    
     const tempFile: UploadedFile = {
       id: tempFileId,
       name: file.name,
       type: file.type,
       size: file.size,
       url: '',
+      preview: previewUrl,
       isUploading: true,
     };
 
@@ -117,14 +125,24 @@ export function ChatInput({
           url: result.file.url,
           cloudinaryUrl: result.file.cloudinaryUrl,
           uploadcareId: result.file.uploadcareId,
-          preview: result.file.preview,
+          // Use Cloudinary URL for images after upload, or server preview, or fallback to blob URL
+          preview: result.file.cloudinaryUrl || result.file.preview || (tempFile.type.startsWith('image/') ? tempFile.preview : undefined),
           isUploading: false,
           analysis: result.file.analysis || result.analysis, // Include analysis data from file or root
         };
         
         // Replace the temporary file with the actual uploaded file
         setUploadedFiles(prev => {
-          const updatedFiles = prev.map(f => f.id === tempFileId ? uploadedFile : f);
+          const updatedFiles = prev.map(f => {
+            if (f.id === tempFileId) {
+              // Clean up the old blob URL if we're replacing it with a Cloudinary URL
+              if (f.preview && f.preview.startsWith('blob:') && uploadedFile.preview && !uploadedFile.preview.startsWith('blob:')) {
+                URL.revokeObjectURL(f.preview);
+              }
+              return uploadedFile;
+            }
+            return f;
+          });
           return updatedFiles;
         });
       } else {
@@ -184,7 +202,14 @@ export function ChatInput({
   };
 
   const handleRemoveFile = (fileId: string) => {
-    setUploadedFiles(prev => prev.filter(file => file.id !== fileId));
+    setUploadedFiles(prev => {
+      const fileToRemove = prev.find(file => file.id === fileId);
+      // Clean up blob URL if it exists
+      if (fileToRemove?.preview && fileToRemove.preview.startsWith('blob:')) {
+        URL.revokeObjectURL(fileToRemove.preview);
+      }
+      return prev.filter(file => file.id !== fileId);
+    });
   };
 
   const getFileIcon = (type: string) => {
@@ -311,6 +336,17 @@ export function ChatInput({
     }
   }, [showPlusMenu]);
 
+  // Cleanup blob URLs when component unmounts
+  useEffect(() => {
+    return () => {
+      uploadedFiles.forEach(file => {
+        if (file.preview && file.preview.startsWith('blob:')) {
+          URL.revokeObjectURL(file.preview);
+        }
+      });
+    };
+  }, []); // Only run on unmount
+
   return (
     <div className="input-area relative">
       {/* Hidden file input */}
@@ -348,49 +384,89 @@ export function ChatInput({
                         <div
                             key={file.id}
                             className={cn(
-                                "relative rounded-lg border p-2 transition-colors max-w-[200px]",
+                                "relative rounded-lg border transition-colors max-w-[200px] overflow-hidden",
                                 file.isUploading 
                                     ? "bg-blue-50 border-blue-200 animate-pulse" 
                                     : "bg-gray-50 border-gray-200 hover:bg-gray-100"
                             )}
                         >
-                            <div className="flex items-start gap-2">
-                            {/* File Icon */}
-                            <div className={cn(
-                                "flex-shrink-0 w-6 h-6 rounded flex items-center justify-center",
-                                file.isUploading 
-                                    ? "bg-blue-500" 
-                                    : getFileIconColor(file.type)
-                            )}>
-                                {file.isUploading ? (
-                                    <Loader2 className="h-3 w-3 text-white animate-spin" />
-                                ) : (
-                                    getFileIcon(file.type)
-                                )}
-                            </div>
-                            
-                            {/* File Info */}
-                            <div className="flex-1 min-w-0">
-                                <p className="text-xs font-medium text-gray-900 truncate">
-                                {file.name}
-                                </p>
-                                <p className="text-xs text-gray-500">
-                                {file.isUploading ? "Uploading..." : getFileTypeLabel(file.type)}
-                                </p>
-                            </div>
-                            
-                            {/* Remove Button - only show if not uploading */}
-                            {!file.isUploading && (
-                                <button
-                                    onClick={() => handleRemoveFile(file.id)}
-                                    className="flex-shrink-0 w-4 h-4 bg-gray-200 hover:bg-gray-300 rounded-full flex items-center justify-center transition-colors"
-                                    disabled={disabled}
-                                    title="Remove file"
-                                >
-                                    <X className="h-2 w-2 text-gray-600" />
-                                </button>
+                            {/* Image Preview for image files */}
+                            {file.type.startsWith('image/') && file.preview ? (
+                                <div className="relative">
+                                    <img
+                                        src={file.preview}
+                                        alt={file.name}
+                                        className="w-full h-32 object-cover"
+                                    />
+                                    {/* Overlay with edit and remove buttons */}
+                                    <div className="absolute top-2 right-2 flex gap-1">
+                                        <button
+                                            className="w-6 h-6 bg-black/50 hover:bg-black/70 rounded-full flex items-center justify-center transition-colors"
+                                            disabled={disabled || file.isUploading}
+                                            title="Edit image"
+                                        >
+                                            <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                                <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                                            </svg>
+                                        </button>
+                                        <button
+                                            onClick={() => handleRemoveFile(file.id)}
+                                            className="w-6 h-6 bg-black/50 hover:bg-black/70 rounded-full flex items-center justify-center transition-colors"
+                                            disabled={disabled || file.isUploading}
+                                            title="Remove image"
+                                        >
+                                            <X className="h-3 w-3 text-white" />
+                                        </button>
+                                    </div>
+                                    {/* Loading overlay for uploading images */}
+                                    {file.isUploading && (
+                                        <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                                            <Loader2 className="h-6 w-6 text-white animate-spin" />
+                                        </div>
+                                    )}
+                                </div>
+                            ) : (
+                                /* Non-image file display */
+                                <div className="p-2">
+                                    <div className="flex items-start gap-2">
+                                        {/* File Icon */}
+                                        <div className={cn(
+                                            "flex-shrink-0 w-6 h-6 rounded flex items-center justify-center",
+                                            file.isUploading 
+                                                ? "bg-blue-500" 
+                                                : getFileIconColor(file.type)
+                                        )}>
+                                            {file.isUploading ? (
+                                                <Loader2 className="h-3 w-3 text-white animate-spin" />
+                                            ) : (
+                                                getFileIcon(file.type)
+                                            )}
+                                        </div>
+                                        
+                                        {/* File Info */}
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-xs font-medium text-gray-900 truncate">
+                                            {file.name}
+                                            </p>
+                                            <p className="text-xs text-gray-500">
+                                            {file.isUploading ? "Uploading..." : getFileTypeLabel(file.type)}
+                                            </p>
+                                        </div>
+                                        
+                                        {/* Remove Button - only show if not uploading */}
+                                        {!file.isUploading && (
+                                            <button
+                                                onClick={() => handleRemoveFile(file.id)}
+                                                className="flex-shrink-0 w-4 h-4 bg-gray-200 hover:bg-gray-300 rounded-full flex items-center justify-center transition-colors"
+                                                disabled={disabled}
+                                                title="Remove file"
+                                            >
+                                                <X className="h-2 w-2 text-gray-600" />
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
                             )}
-                            </div>
                         </div>
                         ))}
                         </div>

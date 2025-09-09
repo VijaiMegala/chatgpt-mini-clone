@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useUser, SignInButton, UserButton } from "@clerk/nextjs";
+import { useRouter, useParams } from "next/navigation";
 import { ChatMessage } from "@/components/chat-message";
 import { ChatInput } from "@/components/chat-input";
 import { Sidebar } from "@/components/sidebar";
@@ -59,10 +60,14 @@ interface Conversation {
   totalPages?: number;
 }
 
-export default function Home() {
+export default function ChatPage() {
   const { isSignedIn, user, isLoaded } = useUser();
+  const router = useRouter();
+  const params = useParams();
+  const conversationId = params.id as string;
+
   const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
+  const [currentConversationId, setCurrentConversationId] = useState<string | null>(conversationId);
   const [isGenerating, setIsGenerating] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isStreaming, setIsStreaming] = useState(false);
@@ -256,6 +261,15 @@ export default function Home() {
     }
   }, [isLoaded, isSignedIn]);
 
+  // Load specific conversation when conversationId changes
+  useEffect(() => {
+    if (conversationId && isSignedIn) {
+      setCurrentConversationId(conversationId);
+      // Load messages for this conversation
+      fetchConversationMessages(conversationId);
+    }
+  }, [conversationId, isSignedIn]);
+
   // Call useEffect at the top level - it will only run when currentMessages changes
   useEffect(() => {
     // Only scroll if user is authenticated and there are messages
@@ -296,13 +310,11 @@ export default function Home() {
   }
 
   const handleNewChat = () => {
-    setCurrentConversationId(null);
-    setSidebarOpen(false);
+    router.push('/');
   };
 
   const handleSelectConversation = async (id: string) => {
-    // Navigate to the conversation page
-    window.location.href = `/chat/${id}`;
+    router.push(`/chat/${id}`);
   };
 
   const handleDeleteConversation = async (id: string) => {
@@ -314,7 +326,7 @@ export default function Home() {
       if (response.ok) {
         setConversations(prev => prev.filter(conv => conv.id !== id));
         if (currentConversationId === id) {
-          setCurrentConversationId(null);
+          router.push('/');
         }
       } else {
         console.error('Failed to delete conversation');
@@ -699,8 +711,7 @@ export default function Home() {
           conversationId = newConversation.id;
           setCurrentConversationId(conversationId);
           // Navigate to the new conversation
-          window.location.href = `/chat/${conversationId}`;
-          return;
+          router.push(`/chat/${conversationId}`);
         } else {
           console.error('Failed to create conversation in database');
           return;

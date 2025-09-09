@@ -45,6 +45,7 @@ export async function POST(req: NextRequest) {
     const conversation = new Conversation({
       userId,
       title: title || "New Chat",
+      activePath: [],
     });
 
     await conversation.save();

@@ -20,7 +20,7 @@ export async function PUT(
     await connectDB();
 
     const { id } = await params;
-    const { content } = await req.json();
+    const { content, files } = await req.json();
 
     if (!content) {
       return NextResponse.json(
@@ -37,13 +37,24 @@ export async function PUT(
       );
     }
 
+    // Build update object
+    const updateData: any = {
+      content,
+      edited: true,
+      updatedAt: new Date()
+    };
+
+    // Only update files if they are provided
+    if (files !== undefined) {
+      updateData.files = files.map((file: any) => ({
+        ...file,
+        uploadedAt: file.uploadedAt || new Date()
+      }));
+    }
+
     const message = await Message.findOneAndUpdate(
       { _id: new Types.ObjectId(id), userId },
-      { 
-        content,
-        edited: true,
-        updatedAt: new Date()
-      },
+      updateData,
       { new: true }
     );
 
@@ -60,6 +71,7 @@ export async function PUT(
         id: message._id,
         content: message.content,
         edited: message.edited,
+        files: message.files,
         updatedAt: message.updatedAt
       }
     });
